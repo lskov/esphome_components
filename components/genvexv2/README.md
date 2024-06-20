@@ -52,8 +52,10 @@ api:
   encryption:
     key: "<a secret encryption key>"
 
+
 ota:
-  password: "<secure passwors>"
+  - platform: esphome
+    password: "<secure passwors>"
 
 wifi:
   ssid: "<Your home Wifi>"
