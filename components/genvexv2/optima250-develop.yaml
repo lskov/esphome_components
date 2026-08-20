@@ -42,7 +42,9 @@ select:
     
 sensor:
   - platform: template
-    name: "Genvex Virkningsgrad"
+    name: "Genvex Efficiency"
+    icon: mdi:air-filter
+    unit_of_measurement: "%"
     lambda: |-
       float genvex_temp_t1_inlet = (id(genvex_temp_t1).state);
       float genvex_temp_t3_outdoor = (id(genvex_temp_t3).state);
@@ -143,6 +145,7 @@ sensor:
     modbus_controller_id: genvex_modbus_controller
     name: "Genvex inlet fan"
     id: genvex_inlet_fan
+    icon: mdi:fan
     unit_of_measurement: "%"
     value_type: U_WORD
     register_type: read
@@ -152,6 +155,7 @@ sensor:
     modbus_controller_id: genvex_modbus_controller
     name: "Genvex extract fan"
     id: genvex_extract_fan
+    icon: mdi:fan
     unit_of_measurement: "%"
     value_type: U_WORD
     register_type: read
@@ -179,6 +183,7 @@ sensor:
     modbus_controller_id: genvex_modbus_controller
     name: "Genvex humidity fan control"
     id: genvex_humidity_fan_control
+    icon: mdi:water-percent
     unit_of_measurement: "%"
     value_type: U_WORD
     register_type: read
@@ -338,6 +343,9 @@ number:
     modbus_controller_id: genvex_modbus_controller
     name: "Genvex target temp"
     id: genvex_target_temp
+    device_class: temperature
+    icon: mdi:thermometer
+    unit_of_measurement: °C
     min_value: 10
     max_value: 30
     step: 0.1
@@ -352,12 +360,123 @@ number:
     modbus_controller_id: genvex_modbus_controller
     name: "Genvex Ventilation speed"
     id: genvex_ventilation_speed
+    icon: mdi:fan
     min_value: 0
     max_value: 4
     step: 1.0
     address: 100
 
+  - platform: modbus_controller
+    modbus_controller_id: genvex_modbus_controller
+    name: "Genvex Step 1 Inlet Speed"
+    id: genvex_step1_inlet_speed
+    icon: mdi:fan-speed-1
+    min_value: 0
+    max_value: 100
+    unit_of_measurement: '%'
+    register_type: holding
+    value_type: U_WORD
+    address: 6
+
+  - platform: modbus_controller
+    modbus_controller_id: genvex_modbus_controller
+    name: "Genvex Step 2 Inlet Speed"
+    id: genvex_step2_inlet_speed
+    icon: mdi:fan-speed-2
+    min_value: 0
+    max_value: 100
+    unit_of_measurement: '%'
+    register_type: holding
+    value_type: U_WORD
+    address: 7
+
+  - platform: modbus_controller
+    modbus_controller_id: genvex_modbus_controller
+    name: "Genvex Step 3 Inlet Speed"
+    id: genvex_step3_inlet_speed
+    icon: mdi:fan-speed-3
+    min_value: 0
+    max_value: 100
+    unit_of_measurement: '%'
+    register_type: holding
+    value_type: U_WORD
+    address: 8
+
+  - platform: modbus_controller
+    modbus_controller_id: genvex_modbus_controller
+    name: "Genvex Step 1 Outlet Speed"
+    id: genvex_step1_outlet_speed
+    icon: mdi:fan-speed-1
+    min_value: 0
+    max_value: 100
+    unit_of_measurement: '%'
+    register_type: holding
+    value_type: U_WORD
+    address: 9
+
+  - platform: modbus_controller
+    modbus_controller_id: genvex_modbus_controller
+    name: "Genvex Step 2 Outlet Speed"
+    id: genvex_step2_outlet_speed
+    icon: mdi:fan-speed-2
+    min_value: 0
+    max_value: 100
+    unit_of_measurement: '%'
+    register_type: holding
+    value_type: U_WORD
+    address: 10
+
+  - platform: modbus_controller
+    modbus_controller_id: genvex_modbus_controller
+    name: "Genvex Step 3 Outlet Speed"
+    id: genvex_step3_outlet_speed
+    icon: mdi:fan-speed-3
+    min_value: 0
+    max_value: 100
+    unit_of_measurement: '%'
+    register_type: holding
+    value_type: U_WORD
+    address: 11
+
+  - platform: modbus_controller
+    modbus_controller_id: genvex_modbus_controller
+    name: "Genvex Bypass Open Max Temp"
+    id: genvex_bypass_open_max_temp
+    icon: mdi:thermometer
+    unit_of_measurement: °C
+    min_value: 1
+    max_value: 10
+    register_type: holding
+    value_type: U_WORD
+    address: 17
+    step: 0.1
+    lambda: "return x/10;"
+    write_lambda: |-
+      ESP_LOGD("Genvex bypass max temp","Processing new bypass max open temp %f", x);
+      uint16_t new_temp = lroundf(x * 10.0f);
+      ESP_LOGD("Genvex bypass max temp","New value %d", new_temp);
+      return new_temp;
+
+  - platform: modbus_controller
+    modbus_controller_id: genvex_modbus_controller
+    name: "Genvex Bypass Close on Low Inlet Temp (Diff From Target Temp)"
+    id: genvex_bypass_close_on_low_inlet_temp
+    icon: mdi:thermometer
+    unit_of_measurement: °C
+    min_value: 0
+    max_value: 20
+    register_type: holding
+    value_type: U_WORD
+    address: 25
+
 binary_sensor:
+  - platform: modbus_controller
+    modbus_controller_id: genvex_modbus_controller
+    name: "Genvex On/Off Possible On K1"
+    id: genvex_on_off_possible
+    register_type: holding
+    address: 24
+
   - platform: modbus_controller
     modbus_controller_id: genvex_modbus_controller
     name: "Genvex bypass onoff"
