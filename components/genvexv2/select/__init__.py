@@ -10,7 +10,6 @@ from esphome.components.modbus_controller import (
     CONF_SKIP_UPDATES,
     CONF_REGISTER_TYPE,
     CONF_VALUE_TYPE,
-    SENSOR_VALUE_TYPE,
 )
 
 from esphome.const import (
