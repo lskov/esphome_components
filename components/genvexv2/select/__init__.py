@@ -12,6 +12,8 @@ from esphome.components.modbus_controller import (
     CONF_VALUE_TYPE,
 )
 
+from esphome.components.modbus.helpers import SENSOR_VALUE_TYPE
+
 from esphome.const import (
     CONF_ID, 
     CONF_ADDRESS,
