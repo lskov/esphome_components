@@ -1,5 +1,6 @@
 #include "wavinAhc9000.h"
 #include "esphome/core/log.h"
+#include "esphome/core/alloc_helpers.h"
 
 namespace esphome {
 namespace wavinAhc9000 {
@@ -54,7 +55,7 @@ void WavinAhc9000::set_target_temp(int channel, float temperature) {
 }
 
 void WavinAhc9000::on_modbus_data(const std::vector<uint8_t> &data) {
-  ESP_LOGV(TAG, "Channel %d, state %d, Data: %s", channel_ + 1, state_, hexencode(data).c_str());
+  ESP_LOGV(TAG, "Channel %d, state %d, Data: %s", channel_ + 1, state_, format_hex_pretty(data).c_str());
   float temperature;
   switch (state_) {
     case 0:

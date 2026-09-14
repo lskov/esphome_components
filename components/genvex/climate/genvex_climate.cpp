@@ -61,11 +61,13 @@ void GenvexClimate::control(const climate::ClimateCall &call) {
 
 climate::ClimateTraits GenvexClimate::traits() {
   auto traits = climate::ClimateTraits();
-  traits.set_supports_current_temperature(true);
-  traits.set_supports_fan_mode_off(true);
-  traits.set_supports_fan_mode_low(true);
-  traits.set_supports_fan_mode_medium(true);
-  traits.set_supports_fan_mode_high(true);
+  traits.add_feature_flags(climate::CLIMATE_SUPPORTS_CURRENT_TEMPERATURE);
+  traits.set_supported_fan_modes({
+      climate::CLIMATE_FAN_OFF,
+      climate::CLIMATE_FAN_LOW,
+      climate::CLIMATE_FAN_MEDIUM,
+      climate::CLIMATE_FAN_HIGH,
+  });
   return traits;
 }
 

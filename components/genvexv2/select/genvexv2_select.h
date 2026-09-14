@@ -27,7 +27,7 @@ public:
     this->force_new_range = force_new_range;
   };
 
-  void parse_and_publish(const std::vector<uint8_t> &data) override;
+  void parse_and_publish(std::span<const uint8_t> data) override;
   void set_parent(ModbusController *modbus_controller) { this->modbus_controller_ = modbus_controller; }
 
 protected:

@@ -1,5 +1,6 @@
 #include "genvex.h"
 #include "esphome/core/log.h"
+#include "esphome/core/alloc_helpers.h"
 
 namespace esphome {
 namespace genvex {
@@ -30,7 +31,7 @@ void Genvex::on_modbus_data(const std::vector<uint8_t> &data) {
 		ESP_LOGW(TAG, "Invalid data packet size (%d) for state %d", data.size(), this->state_);
 		return;
 	}
-	ESP_LOGD(TAG, "Data: %s", hexencode(data).c_str());
+	ESP_LOGD(TAG, "Data: %s", format_hex_pretty(data).c_str());
 
 	//  Command response is 4 bytes echoing the write command
 	if (waiting_for_write_ack_ )  {
