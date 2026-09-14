@@ -53,7 +53,7 @@ void WavinAhc9000Climate::control(const climate::ClimateCall &call) {
 
 climate::ClimateTraits WavinAhc9000Climate::traits() {
   auto traits = climate::ClimateTraits();
-  traits.set_supports_current_temperature(true);
+  traits.add_feature_flags(climate::CLIMATE_SUPPORTS_CURRENT_TEMPERATURE);
   return traits;
 }
 
