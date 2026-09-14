@@ -6,7 +6,15 @@ namespace esphome {
 namespace genvexv2 {
 static const char *TAG = "genvexv2.climate";
 
+/// The custom fan modes exposed by this climate entity.
+/// The Climate base class stores these pointers and compares against them by
+/// identity, so the same array must be used everywhere a custom fan mode is set.
+static const char *const GENVEXV2_FAN_MODES[] = {"1", "2", "3", "4"};
+
 void Genvexv2Climate::setup() {
+  // Custom fan modes now live on the Climate entity instead of on ClimateTraits.
+  this->set_supported_custom_fan_modes(GENVEXV2_FAN_MODES);
+
   current_temp_sensor_->add_on_state_callback([this](float state) {
     ESP_LOGD(TAG, "CURRENT TEMP SENSOR CALLBACK: %f", state);
     current_temperature = state;
@@ -46,10 +54,9 @@ void Genvexv2Climate::control(const climate::ClimateCall& call) {
       case climate::CLIMATE_MODE_OFF: 
       {
         ESP_LOGD("TAG", "Mode changed to OFF");
-        this->fan_mode = climate::CLIMATE_FAN_OFF;
-        // The only valid fan mode that is not custom is "OFF"
-        auto new_fan_mode = *call.get_fan_mode();
-        custom_fan_mode.reset();
+        // The only valid fan mode that is not custom is "OFF";
+        // setting it also clears any active custom fan mode.
+        this->set_fan_mode_(climate::CLIMATE_FAN_OFF);
 
         ESP_LOGD(TAG, "Custom Fan mode set to: 0");
         fan_speed_number_->make_call().set_value(0).perform();//set(0);
@@ -58,9 +65,9 @@ void Genvexv2Climate::control(const climate::ClimateCall& call) {
       case climate::CLIMATE_MODE_AUTO: 
       {
         ESP_LOGD("TAG", "Mode changed to AUTO");
-        this->custom_fan_mode = esphome::to_string("2");
-        fan_mode.reset();
-        auto optional_genvexv2_fan_mode = parse_number<float>("2");
+        // Setting a custom fan mode clears the regular fan mode.
+        this->set_custom_fan_mode_(GENVEXV2_FAN_MODES[1]);
+        auto optional_genvexv2_fan_mode = parse_number<float>(GENVEXV2_FAN_MODES[1]);
         if(optional_genvexv2_fan_mode.has_value())
         {
           auto genvexv2_fan_mode = optional_genvexv2_fan_mode.value();
@@ -78,19 +85,18 @@ void Genvexv2Climate::control(const climate::ClimateCall& call) {
   {
     ESP_LOGD("TAG", "Fan mode changed to OFF from Home Assistant");
     // The only valid fan mode that is not custom is "OFF"
-    auto new_fan_mode = *call.get_fan_mode();
-    custom_fan_mode.reset();
+    this->set_fan_mode_(climate::CLIMATE_FAN_OFF);
 
     ESP_LOGD(TAG, "Fan mode set to: 0");
     fan_speed_number_->make_call().set_value(0).perform();//set(0);
   }
 
-  if (call.get_custom_fan_mode().has_value())
+  if (call.has_custom_fan_mode())
   {
     ESP_LOGD("TAG", "Fan mode changed to custom fan mode 1-4 from Home Assistant");
-    auto new_custom_fan_mode = *call.get_custom_fan_mode();
-    custom_fan_mode = new_custom_fan_mode;
-    fan_mode.reset();
+    auto new_custom_fan_mode = call.get_custom_fan_mode();
+    // Setting a custom fan mode clears the regular fan mode.
+    this->set_custom_fan_mode_(new_custom_fan_mode);
     auto optional_genvexv2_fan_mode = parse_number<float>(new_custom_fan_mode.c_str());
     if(optional_genvexv2_fan_mode.has_value())
     {
@@ -105,12 +111,7 @@ void Genvexv2Climate::control(const climate::ClimateCall& call) {
 climate::ClimateTraits Genvexv2Climate::traits() {
   auto traits = climate::ClimateTraits();
 
-  traits.set_supported_custom_fan_modes({
-    "1",
-    "2",
-    "3",
-    "4"
-  });
+  // The custom fan modes are registered on the entity itself in setup().
 
   traits.set_supported_fan_modes({ 
     climate::ClimateFanMode::CLIMATE_FAN_OFF 
@@ -121,7 +122,7 @@ climate::ClimateTraits Genvexv2Climate::traits() {
     climate::ClimateMode::CLIMATE_MODE_AUTO,
    });
 
-  traits.set_supports_current_temperature(true);
+  traits.add_feature_flags(climate::CLIMATE_SUPPORTS_CURRENT_TEMPERATURE);
   traits.set_visual_temperature_step(0.1);
   traits.set_visual_min_temperature(5);
   traits.set_visual_max_temperature(30);
@@ -136,40 +137,27 @@ void Genvexv2Climate::dump_config() {
 void Genvexv2Climate::genvexv2fanspeed_to_fanmode(const int state)
 {
   ESP_LOGD("TAG", "In genvexv2fanspeed_to_fanmode");
-  climate::ClimateFanMode return_value;
   ESP_LOGD("TAG", "State is %i", state);
-  this->custom_fan_mode.reset();
-  this->fan_mode.reset();
 
   switch (state) {
   case 1:
-    ESP_LOGD("TAG", "Case 1");
-    this->mode = climate::CLIMATE_MODE_AUTO;
-    this->custom_fan_mode = esphome::to_string(state);
-    break;
   case 2:
-    ESP_LOGD("TAG", "Case 2");
-    this->mode = climate::CLIMATE_MODE_AUTO;
-    this->custom_fan_mode = esphome::to_string(state);
-    break;
   case 3:
-    ESP_LOGD("TAG", "Case 3");
-    this->mode = climate::CLIMATE_MODE_AUTO;
-    this->custom_fan_mode = esphome::to_string(state);
-    break;
   case 4:
-    ESP_LOGD("TAG", "Case 4");
+    ESP_LOGD("TAG", "Case %i", state);
     this->mode = climate::CLIMATE_MODE_AUTO;
-    this->custom_fan_mode = esphome::to_string(state);
+    // Setting a custom fan mode clears the regular fan mode.
+    this->set_custom_fan_mode_(GENVEXV2_FAN_MODES[state - 1]);
     break;
   case 0:
     ESP_LOGD("TAG", "Case 0");
-    this->fan_mode = climate::CLIMATE_FAN_OFF; 
+    // Setting the regular fan mode clears any active custom fan mode.
+    this->set_fan_mode_(climate::CLIMATE_FAN_OFF);
     this->mode = climate::CLIMATE_MODE_OFF;
     break;
   default: 
     ESP_LOGD("TAG", "Case default");
-    this->fan_mode = climate::CLIMATE_FAN_OFF; 
+    this->set_fan_mode_(climate::CLIMATE_FAN_OFF);
     this->mode = climate::CLIMATE_MODE_OFF;
     break;
   }
